@@ -1,18 +1,15 @@
+using System.Text.Json;
 using HealthChecks.UI.Configuration;
 using HealthChecks.UI.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Serialization;
 
 namespace HealthChecks.UI.Middleware
 {
     internal class UIApiEndpointMiddleware
     {
-        private readonly JsonSerializerSettings _jsonSerializationSettings;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly Settings _settings;
 
@@ -21,12 +18,6 @@ namespace HealthChecks.UI.Middleware
             _ = next;
             _serviceScopeFactory = serviceScopeFactory;
             _settings = Guard.ThrowIfNull(settings?.Value);
-            _jsonSerializationSettings = new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                Converters = new[] { new StringEnumConverter() },
-                DateTimeZoneHandling = DateTimeZoneHandling.Local
-            };
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -58,7 +49,7 @@ namespace HealthChecks.UI.Middleware
                 }
             }
 
-            var responseContent = JsonConvert.SerializeObject(healthChecksExecutions, _jsonSerializationSettings);
+            var responseContent = JsonSerializer.Serialize(healthChecksExecutions, JsonSeraliserSettings.Options);
             context.Response.ContentType = Keys.DEFAULT_RESPONSE_CONTENT_TYPE;
 
             await context.Response.WriteAsync(responseContent);
